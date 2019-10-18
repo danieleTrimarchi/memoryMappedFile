@@ -41,6 +41,14 @@ int main(int argc, char *argv[]) {
 			else
 				cout<<"No lock available...!\n";
 	
+			// Generate a segv and break this code - file remove is not called!
+			try {
+				int* foo; 
+				foo[2]=0; 
+			} catch (...) {
+				cout<<"Catched segv! \n";
+			}
+	
 			cout<<"Please press a key to exit\n";
 			string s; 
 			cin >> s;  
