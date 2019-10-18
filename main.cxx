@@ -8,6 +8,7 @@ using std::string;
 
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <boost/filesystem.hpp>
 
 using boost::interprocess::file_mapping;
 using boost::interprocess::mapped_region;
@@ -22,26 +23,10 @@ int main(int argc, char *argv[]) {
 		const char *FileName = "Platform_MemoryMapFile";
 		std::size_t FileSize = 10000; /// use 2 as the mapped region uses FileSize / 2
 
-		try{
-			// Try reading the file mapping. Will throw if the file is not present
-			std::cout<<"instantiating mapping\n";
-			file_mapping m_file(FileName, read_only);
-			std::cout<<"mapping instantiated\n";
-			mapped_region region(m_file, read_only);
-			std::cout<<"region instantiated\n";
-			
-			//Get the address of the mapped region
-			 void * addr       = region.get_address();
-			 std::size_t size  = region.get_size();
-
-			if(size)
-			{
-				cout << "The shared memory was already allocated\n"; 
-				return 1; 
-			}
 	
-		} catch (...){
-			std::cout<<"*** Unknown excetpion caught ***\n";
+		if( exists(boost::filesystem::path( FileName ) ) ) {
+			cout<<"File exists! The shared memory was already allocated\n"; 
+			return 1; 
 		}
 		
 		{   //Create a file
@@ -70,9 +55,6 @@ int main(int argc, char *argv[]) {
 			//Map the second half of the file
 			mapped_region region(m_file2,read_write);
 			
-			//Flush the whole region
-			//region.flush();
-
 			//Get the address of the region
 			void * addr = region.get_address();
 			std::cout << "Region address: " << addr << std::endl;
@@ -81,12 +63,18 @@ int main(int argc, char *argv[]) {
 			std::size_t size = region.get_size();
 			std::cout << "Region size: " << size << std::endl;
 
-			//Write all the memory to 1
-			//std::memset(addr, 1, size);
 		}
 		catch ( boost::interprocess::interprocess_exception& e )
 		{
 			std::cout << "EXCEPTION: " << e.what() << std::endl;
+		}
+		
+		// Generate a segv and break this code - file remove is not called!
+		try {
+			int* foo; 
+			foo[2]=0; 
+		} catch (...) {
+			cout<<"Catched segv! \n";
 		}
 		
 		cout<<"Please press a key to exit\n";
